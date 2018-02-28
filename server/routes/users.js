@@ -4,6 +4,12 @@ let User = require('../models/user.model');
 let jwt = require('jsonwebtoken');
 let configDb = require('./../config/database');
 let moment = require('moment');
+let multer = require('multer');
+let fs = require('fs');
+let mongoose = require('mongoose');
+
+let loginToken = null;
+let userPayload = null;
 
 router.post('/register', (req, res) => {
     let user = new User({
@@ -31,7 +37,6 @@ router.post('/register', (req, res) => {
 });
 
 router.post('/login', (req, res) => {
-    console.log(req.body);
     User.findOne({name: req.body.name}, (err, user) => {
         if (err) {
             console.log(`Server error`, `Finding user in database`, `Error ${err}`);
@@ -49,7 +54,6 @@ router.post('/login', (req, res) => {
             });
         } else {
             User.comparePassword(req.body.password, user.password, (err, isMatched) => {
-                console.log(user.password);
                 if (err) {
                     console.log(`Server error`, `Comparing the passwords`, `Error ${err}`);
                     return res.json({
@@ -59,7 +63,8 @@ router.post('/login', (req, res) => {
                     });
                 } else {
                     if (isMatched) {
-                        const token = jwt.sign(user.toJSON(), configDb.secret, {expiresIn: '30s'});
+                        const token = jwt.sign(user.toJSON(), configDb.secret, {expiresIn: '1h'});
+                        loginToken = token;
                         return res.json({
                             success: true,
                             token: `Bearer ${token}`,
@@ -80,35 +85,156 @@ router.post('/login', (req, res) => {
     });
 });
 
-router.post('/profile', verifyToken, (req, res) => {
+/*
+router.post('/profile/user', checkToken, verifyTokenDate, uploadM, (req, res) => {
+    if (req.file !== undefined) {
+        const id = mongoose.Types.ObjectId(userPayload._id);
+        User.findById(id).exec().then(
+            (user) => {
+                user.imgPath = req.file.path;
+                user.save((err) => {
+                    if (err) {
+                        res.json({message: 'false', error: err})
+                    } else {
+                        res.send({message: 'success', user})
+                    }
+                })
+            }
+        )
+    }
+});
+
+function checkToken(req, res, next) {
+    if (loginToken !== null) {
+        req.token = loginToken;
+        next();
+    } else {
+        //    Forbidden
+        res.sendStatus(403);
+    }
+};
+
+function verifyTokenDate(req, res, next) {
     jwt.verify(req.token, configDb.secret, (err, decoded) => {
-        if(err){
+        if (err) {
             res.send({
                 message: `Unable to decode ${err}`
             });
         } else {
+            userPayload = decoded;
             res.send({
                 message: `success`,
                 payload: decoded
+            });
+            next();
+        }
+    });
+}
+
+function uploadM(req, res, next) {
+    const storage = multer.diskStorage({
+        destination: function (req, file, cb) {
+            cb(null, 'public/images');
+        },
+        filename: function (req, file, cb) {
+            cb(null, file.originalname);
+        }
+    });
+
+    const fileFilter = (req, file, cb) => {
+        // reject a file
+        if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
+            cb(null, true);
+        } else {
+            cb(null, false);
+        }
+    };
+
+    const upload = multer({
+        storage: storage,
+        fileFilter
+    }).single('image');
+
+    upload(req, res, (err) => {
+        if (err) {
+            res.status(501).send(`Error`, {message: `error from multer`});
+        } else {
+            if (req.file !== undefined) {
+                console.log(req.body.hobby);
+                console.log(req.file);
+                next();
+            } else {
+                res.send({message: `not uploaded`}).status(501);
+            }
+        }
+    })
+}
+*/
+
+
+router.post('/profile/user', checkToken, (req, res) => {
+    jwt.verify(req.token, configDb.secret, (err, decoded) => {
+        if (err) {
+            res.send({
+                message: `Unable to decode ${err}`
+            });
+        } else {
+            const storage = multer.diskStorage({
+                destination: function (req, file, cb) {
+                    cb(null, 'public/images');
+                },
+                filename: function (req, file, cb) {
+                    cb(null, file.originalname);
+                }
+            });
+
+            const fileFilter = (req, file, cb) => {
+                // reject a file
+                if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
+                    cb(null, true);
+                } else {
+                    cb(null, false);
+                }
+            };
+
+            const upload = multer({
+                storage: storage,
+                fileFilter
+            }).single('image');
+
+            upload(req, res, (err) => {
+                if (err) {
+                    res.status(501).send(`Error`, {message: `error from multer`});
+                } else {
+                    if (req.file !== undefined) {
+                        console.log(req.body.hobby);
+                        console.log(req.file);
+                        res.send({
+                            message: `success`,
+                            payload: decoded,
+                            file: req.file
+                        });
+
+                    } else {
+                        res.send({message: `not uploaded`}).status(501);
+                    }
+                }
             })
+
         }
     });
 });
 
-function verifyToken (req, res, next) {
-    //get auth header value
-    const barrerHeader = req.headers['authorization'];
-//    check if barrer is undefined;
-    if(typeof barrerHeader !== 'undefined'){
-        //split the token
-        const barrerTokenArr = barrerHeader.split(' ');
-        const barrerToken = barrerTokenArr[1];
-        req.token = barrerToken;
+
+function checkToken(req, res, next) {
+    if (loginToken !== null) {
+        req.token = loginToken;
         next();
     } else {
-    //    Forbidden
+        //    Forbidden
         res.sendStatus(403);
     }
 };
+
 
 module.exports = router;

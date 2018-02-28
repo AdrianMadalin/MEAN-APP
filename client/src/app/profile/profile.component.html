@@ -1,3 +1,26 @@
 <div class="container">
-  <p>{{user['name']}}</p>
+  <h3>{{user.name}}</h3>
 </div>
+
+<div class="container">
+  <div class="form-group">
+    <form #f="ngForm">
+      <label>Hobby</label>
+      <input type="text"
+             name="hobby"
+             placeholder="hobby"
+             [(ngModel)]="hobby"
+             required>
+      <input type="file"
+             name="image"
+             (change)="onFileSelected($event)"
+             style="display: none"
+             #fileInput
+             required>
+
+      <button class="btn btn-primary" (click)="fileInput.click()" required>Pick file</button>
+      <button class="btn btn-primary" (click)="onImageUpload()" [disabled]="!f.valid">Upload image</button>
+    </form>
+  </div>
+</div>
+

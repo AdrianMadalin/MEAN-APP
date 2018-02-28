@@ -2,6 +2,7 @@ import {Injectable} from '@angular/core';
 import {HttpClient, HttpHeaders} from "@angular/common/http";
 import 'rxjs/add/operator/map';
 import {JwtHelper} from "../helper.service";
+import {Router} from "@angular/router";
 
 @Injectable()
 export class AuthService {
@@ -10,8 +11,10 @@ export class AuthService {
   isTokenValid;
 
   constructor(private _httpClient: HttpClient,
-              private _jwtHelper: JwtHelper) {
+              private _jwtHelper: JwtHelper,
+              private _route: Router) {
     this.isTokenValid = false;
+    this.getUser();
   }
 
   onRegisterUser(user) {
@@ -27,7 +30,10 @@ export class AuthService {
     const headers = new HttpHeaders();
     headers.append('Content-Type', 'application/json');
     return this._httpClient.post(url, user, {headers: headers})
-      .map((res) => res)
+      .map((res) => {
+        this.user = res['user'];
+        return res;
+      })
   }
 
   storeUserData(token, user) {
@@ -53,14 +59,25 @@ export class AuthService {
     */
 
     let token = localStorage.getItem('id_token');
-    if(token !== null) {
+    if (token !== null) {
       this.isTokenValid = !this._jwtHelper.isTokenExpired(token);
-      if(!this.isTokenValid) {
+      if (!this.isTokenValid) {
         localStorage.clear();
       }
     }
 
     return this.isTokenValid;
+  }
+
+  getUser() {
+    return JSON.parse(localStorage.getItem('user'));
+  }
+
+  uploadUserData(userData) {
+    const url = '/profile/user';
+    const headers = new HttpHeaders();
+    headers.append('Content-Type', 'application/json');
+    return this._httpClient.post(url, userData).map((res) => res);
   }
 
 

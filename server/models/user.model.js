@@ -3,7 +3,8 @@ let bcrypt = require('bcryptjs');
 
 let UserSchema = new mongoose.Schema({
     name: String,
-    password: String
+    password: String,
+    imgPath: String
 });
 
 module.exports = mongoose.model('User', UserSchema);
