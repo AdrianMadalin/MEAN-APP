@@ -31,6 +31,7 @@ router.post('/register', (req, res) => {
 });
 
 router.post('/login', (req, res) => {
+    console.log(req.body);
     User.findOne({name: req.body.name}, (err, user) => {
         if (err) {
             console.log(`Server error`, `Finding user in database`, `Error ${err}`);
@@ -48,6 +49,7 @@ router.post('/login', (req, res) => {
             });
         } else {
             User.comparePassword(req.body.password, user.password, (err, isMatched) => {
+                console.log(user.password);
                 if (err) {
                     console.log(`Server error`, `Comparing the passwords`, `Error ${err}`);
                     return res.json({
