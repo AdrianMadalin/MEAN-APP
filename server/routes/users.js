@@ -209,12 +209,23 @@ router.post('/profile/user', checkToken, (req, res) => {
                     if (req.file !== undefined) {
                         console.log(req.body.hobby);
                         console.log(req.file);
-                        res.send({
-                            message: `success`,
-                            payload: decoded,
-                            file: req.file
+                        User.findOne({name: decoded.name}).exec().then((user) => {
+                            user['imgPath'] = 'images/' + req.file.originalname;
+                            user.save((err) => {
+                                if (err) {
+                                    res.send({message: `user not saved`, error: err}).status(501);
+                                } else {
+                                    res.send({
+                                        message: `success`,
+                                        user: {
+                                            id: user._id,
+                                            name: user.name,
+                                            img: user.imgPath
+                                        }
+                                    });
+                                }
+                            })
                         });
-
                     } else {
                         res.send({message: `not uploaded`}).status(501);
                     }

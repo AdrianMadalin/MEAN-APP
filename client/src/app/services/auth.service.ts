@@ -41,7 +41,12 @@ export class AuthService {
     localStorage.setItem('user', JSON.stringify(user));
     this.authToken = token;
     this.user = user;
-    // this.isTokenValid = !this._jwtHelper.isTokenExpired(localStorage.getItem('id_token'));
+  }
+
+  updateUserData(user) {
+    localStorage.removeItem('user');
+    localStorage.setItem('user', user);
+    this.user = user
   }
 
   logout() {

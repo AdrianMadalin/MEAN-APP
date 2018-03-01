@@ -497,7 +497,7 @@ module.exports = ""
 /***/ "./src/app/profile/profile.component.html":
 /***/ (function(module, exports) {
 
-module.exports = "<div class=\"container\">\r\n  <h3>{{user.name}}</h3>\r\n</div>\r\n\r\n<div class=\"container\">\r\n  <div class=\"form-group\">\r\n    <form #f=\"ngForm\">\r\n      <label>Hobby</label>\r\n      <input type=\"text\"\r\n             name=\"hobby\"\r\n             placeholder=\"hobby\"\r\n             [(ngModel)]=\"hobby\"\r\n             required>\r\n      <input type=\"file\"\r\n             name=\"image\"\r\n             (change)=\"onFileSelected($event)\"\r\n             style=\"display: none\"\r\n             #fileInput\r\n             required>\r\n\r\n      <button class=\"btn btn-primary\" (click)=\"fileInput.click()\" required>Pick file</button>\r\n      <button class=\"btn btn-primary\" (click)=\"onImageUpload()\" [disabled]=\"!f.valid\">Upload image</button>\r\n    </form>\r\n  </div>\r\n</div>\r\n\r\n"
+module.exports = "<div class=\"container\">\r\n  <h3>{{user.name}}</h3>\r\n  <div class=\"col-xl-6\">\r\n    <img src=\"{{user['img']}}\" alt=\"{{user['img']}}\" class=\"img-fluid\">\r\n  </div>\r\n</div>\r\n\r\n<div class=\"container\">\r\n  <div class=\"form-group\">\r\n    <form #f=\"ngForm\">\r\n      <label>Hobby</label>\r\n      <input type=\"text\"\r\n             name=\"hobby\"\r\n             placeholder=\"hobby\"\r\n             [(ngModel)]=\"hobby\"\r\n             required>\r\n      <input type=\"file\"\r\n             name=\"image\"\r\n             (change)=\"onFileSelected($event)\"\r\n             style=\"display: none\"\r\n             #fileInput\r\n             required>\r\n\r\n      <button class=\"btn btn-primary\" (click)=\"fileInput.click()\" required>Pick file</button>\r\n      <button class=\"btn btn-primary\" (click)=\"onImageUpload()\" [disabled]=\"!f.valid\">Upload image</button>\r\n    </form>\r\n  </div>\r\n</div>\r\n\r\n"
 
 /***/ }),
 
@@ -537,12 +537,15 @@ var ProfileComponent = /** @class */ (function () {
         }
     };
     ProfileComponent.prototype.onImageUpload = function () {
+        var _this = this;
         if (this.selectedFile !== null) {
             var fd = new FormData();
             fd.append('image', this.selectedFile, this.selectedFile.name);
             fd.append('hobby', this.hobby);
             this._authService.uploadUserData(fd).subscribe(function (res) {
-                console.log(res);
+                console.log(JSON.stringify(res['user']));
+                console.log(JSON.stringify(res['user'].name));
+                _this._authService.updateUserData(JSON.stringify(res['user']));
             });
         }
     };
@@ -728,7 +731,11 @@ var AuthService = /** @class */ (function () {
         localStorage.setItem('user', JSON.stringify(user));
         this.authToken = token;
         this.user = user;
-        // this.isTokenValid = !this._jwtHelper.isTokenExpired(localStorage.getItem('id_token'));
+    };
+    AuthService.prototype.updateUserData = function (user) {
+        localStorage.removeItem('user');
+        localStorage.setItem('user', user);
+        this.user = user;
     };
     AuthService.prototype.logout = function () {
         this.authToken = null;

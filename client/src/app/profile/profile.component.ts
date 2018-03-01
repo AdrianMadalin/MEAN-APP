@@ -37,7 +37,9 @@ export class ProfileComponent implements OnInit {
       fd.append('hobby', this.hobby);
       this._authService.uploadUserData(fd).subscribe(
         (res) => {
-          console.log(res);
+          console.log(JSON.stringify(res['user']));
+          console.log(JSON.stringify(res['user'].name));
+          this._authService.updateUserData(JSON.stringify(res['user']));
         }
       )
     }
